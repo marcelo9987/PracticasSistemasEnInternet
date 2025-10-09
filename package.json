@@ -1,0 +1,31 @@
+{
+  "name": "practicas-arqdisisint",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node-ts index.ts",
+    "build": "tsc",
+    "dev": "nodemon --exec ts-node index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcelo9987/Practicas-ArqDiSisInt.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/marcelo9987/Practicas-ArqDiSisInt/issues"
+  },
+  "homepage": "https://github.com/marcelo9987/Practicas-ArqDiSisInt#readme",
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "axios": "^1.12.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
