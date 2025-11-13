@@ -9,7 +9,7 @@ import {ObjectId} from "mongodb";
  * createdAt: Date (default)
  */
 /**
- * Product
+ * Representa un producto en la base de datos.
  * @param {ObjectId} [_id] id del producto
  * @param {String} name nombre del producto
  * @param {String} [description] descripcion del producto

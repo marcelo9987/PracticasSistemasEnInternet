@@ -1,9 +1,11 @@
 import express from "express";
-import { conectarMongoDB } from "./database/mongo";
+import {conectarMongoDB} from "./database/mongo";
 import rutasAuth from "./routes/auth";
-import rutasInventario from "./routes/rutasInventario"
-import rutasCarritos from "./routes/rutasCarritos"
+import rutasInventario from "./routes/rutasInventario";
+import rutasCarritos from "./routes/rutasCarritos";
 import dotenv from "dotenv";
+import {gestorParseo} from "./middleware/gestorParseo";
+
 
 const PUERTO: number = 3000;
 
@@ -13,6 +15,12 @@ conectarMongoDB();
 
 const app = express();
 app.use(express.json());
+app.use(gestorParseo);
+app.use((req, res) =>
+{
+    res.status(404).json({message: 'Not found'});
+});
+
 app.use("/api/auth", rutasAuth);
 app.use("/api/products", rutasInventario);
 app.use("/api/cart", rutasCarritos);

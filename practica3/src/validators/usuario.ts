@@ -1,3 +1,8 @@
+/**
+ * Valida los datos de registro de un usuario
+ * @param datos Datos de entrada
+ * @returns {string | null} Mensaje de error o null si es válido
+ */
 export const validarUsuarioRegistro = (datos: any): string | null =>
 {
     if (!datos)
@@ -5,7 +10,11 @@ export const validarUsuarioRegistro = (datos: any): string | null =>
         return "Se esperan parámetros de entrada";
     }
 
-    const {username, email, password} = datos;
+    const {
+        username,
+        email,
+        password
+    } = datos;
     if (!username || !email || !password)
     {
         return "Faltan campos obligatorios";
@@ -23,6 +32,12 @@ export const validarUsuarioRegistro = (datos: any): string | null =>
 
     return null;
 };
+
+/**
+ * Valida el formato de un email
+ * @param {string} email email a validar
+ * @returns {boolean} true si es válido, false si no lo es
+ */
 const validarEmail = (email: string): boolean =>
 {
     const regex = /^((?!\.)[\w\-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/;

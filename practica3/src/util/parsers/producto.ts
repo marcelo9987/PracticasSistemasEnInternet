@@ -1,9 +1,15 @@
 import {DuplaItemCantidad, Product} from "../../types/Product";
 
-export const extraerProducto = (datos:any):Product=>{
+/**
+ * Extrae un producto de los datos proporcionados.
+ * @param datos Datos de entrada
+ * @returns {Product} Producto extraído
+ */
+export const extraerProducto = (datos: any): Product =>
+{
     const nombre: string = datos.name;
 
-    const descripcion:string = datos.description;
+    const descripcion: string = datos.description;
 
     const precio: number = datos.price;
 
@@ -18,9 +24,14 @@ export const extraerProducto = (datos:any):Product=>{
         stock: stock,
         createdAt: creacion
     };
-}
+};
 
-export const extraerDuplaProductoCantidad= (datos:any): DuplaItemCantidad =>
+/**
+ * Extrae una dupla producto-cantidad de los datos proporcionados.
+ * @param datos Datos de entrada
+ * @returns {DuplaItemCantidad} Dupla producto-cantidad extraída
+ */
+export const extraerDuplaProductoCantidad = (datos: any): DuplaItemCantidad =>
 {
     const productId: string = datos.productId;
 
@@ -30,4 +41,4 @@ export const extraerDuplaProductoCantidad= (datos:any): DuplaItemCantidad =>
         productId: productId,
         quantity: quantity
     };
-}
+};

@@ -1,7 +1,7 @@
 /**
- * JwtPayload
- * @param id - ID del usuario
- * @param email - Email del usuario
+ * JwtPayloa
+ * @param {string} id - ID del usuario
+ * @param {string} email - Email del usuario
  */
 export type JwtPayload = {
     id: string;

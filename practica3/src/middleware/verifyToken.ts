@@ -6,22 +6,33 @@ dotenv.config();
 
 const SECRET = process.env.SECRET;
 
-export interface authRequest extends Request {
-    user? : string | jwt.JwtPayload;
+interface authRequest extends Request
+{
+    user?: string | jwt.JwtPayload;
 }
 
-export const verifyToken = (req : authRequest, res: Response, next : NextFunction):void => {
+/**
+ * Middleware encargado de verificar el token JWT de las solicitudes.
+ * @param {authRequest} req Solicitud entrante con posible token JWT.
+ * @param {e.Response} res Respuesta.
+ * @param {e.NextFunction} next
+ */
+export const verifyToken = (req: authRequest, res: Response, next: NextFunction): void =>
+{
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
 
-    if(!token) {
+    if (!token)
+    {
         res.status(401).json({message: "Access token is missing"});
         return;
     }
 
-    jwt.verify(token, SECRET as string, (err, decoded) => {
-        if(err){
-            res.status(403).json({message : "Invalid access token"})
+    jwt.verify(token, SECRET as string, (err, decoded) =>
+    {
+        if (err)
+        {
+            res.status(401).json({message: "Invalid/expired access token, please try logging in again"});
             return;
         }
 
