@@ -1,4 +1,4 @@
-import {DuplaItemCantidad, Product} from "../../types";
+import {DuplaItemCantidad, Product} from "../../types/Product";
 
 export const extraerProducto = (datos:any):Product=>{
     const nombre: string = datos.name;

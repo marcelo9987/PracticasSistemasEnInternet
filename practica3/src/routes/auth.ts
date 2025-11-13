@@ -16,7 +16,7 @@ const SECRET = process.env.SECRET;
 
 router.get("/", async (req, res) =>
 {
-    res.send("Conectado a auth con éxito");
+    res.status(200).json({"message":"Conectado a auth con éxito"});
 });
 
 
@@ -29,7 +29,14 @@ router.post("/register", async (req, res) =>
         const errores = validarUsuarioRegistro({username, email, password});
         if (errores)
         {
+            console.log("Errores de validación:", errores);
             return res.status(400).json({message: errores});
+        }
+
+        const existeEmail = await coleccionUsuarios().findOne({email});
+        if (existeEmail)
+        {
+            return res.status(400).json({message: "Email already registered"});
         }
 
         const existeUsuario = await coleccionUsuarios().findOne({username});

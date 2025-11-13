@@ -1,6 +1,6 @@
 import {ObjectId} from "mongodb";
 import jwt from "jsonwebtoken";
-import {Usuario} from "../../types";
+import {User} from "../../types/User";
 
 export const obtenerIdUsuario = (cadena:string):ObjectId | string =>
 {
@@ -16,7 +16,7 @@ export const obtenerIdUsuario = (cadena:string):ObjectId | string =>
 }
 
 
-export const extraerUsuario = (datos: any): Usuario =>
+export const extraerUsuario = (datos: any): User =>
 {
 
     const username: string = datos.name;
