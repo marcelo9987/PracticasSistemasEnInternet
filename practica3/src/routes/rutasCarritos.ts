@@ -1,12 +1,12 @@
 import {Router} from "express";
-import {Cart, DuplaItemCantidad} from "../types";
-import {obtenerDB} from "../mongo";
 import {ObjectId} from "mongodb";
-import {extraerDuplaProductoCantidad, obtenerIdUsuario, verificarDuplaProductoCantidad} from "../util";
 import {verifyToken} from "../middleware/verifyToken";
-
-
-const coleccionCarritos = () => obtenerDB().collection<Cart>("cart");
+import {validarDuplaProductoCantidad} from "../validators/producto";
+import {extraerDuplaProductoCantidad} from "../util/parsers/producto";
+import {obtenerIdUsuario} from "../util/parsers/usuario";
+import {coleccionCarritos, coleccionProductos} from "../database/mongo";
+import {DuplaItemCantidad} from "../types/Product";
+import {Cart} from "../types/Cart";
 
 
 const router = Router();
@@ -28,13 +28,17 @@ router.put("/add", verifyToken, async (req, res) =>
         }
 
 
-        // console.log("id del usuario", id_usuario);
-
-        const cuerpoCorrecto: String | null = verificarDuplaProductoCantidad(req.body);
+        const cuerpoCorrecto: String | null = validarDuplaProductoCantidad(req.body);
         if (cuerpoCorrecto !== null)
         {
             return res.status(400).json({message: cuerpoCorrecto});
         }
+
+        if (await coleccionProductos().findOne({_id: new ObjectId(req.body.productId as string)}) === null)
+        {
+            return res.status(400).json({message: "Error: productId no existe en la base de datos."});
+        }
+
         const duplaProductoCantidad: DuplaItemCantidad = extraerDuplaProductoCantidad(req.body);
 
         const carrito = (await coleccionCarritos().findOne({userId: id_usuario}));

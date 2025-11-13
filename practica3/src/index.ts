@@ -1,5 +1,5 @@
 import express from "express";
-import { conectarMongoDB } from "./mongo";
+import { conectarMongoDB } from "./database/mongo";
 import rutasAuth from "./routes/auth";
 import rutasInventario from "./routes/rutasInventario"
 import rutasCarritos from "./routes/rutasCarritos"

@@ -1,10 +1,10 @@
 import {Router} from "express";
-import {authRequest, verifyToken} from "../middleware/verifyToken";
-import {Product} from "../types";
-import {obtenerDB} from "../mongo";
-import {extraerProducto, verificarProducto} from "../util";
+import {verifyToken} from "../middleware/verifyToken";
+import {coleccionProductos} from "../database/mongo";
+import {Product} from "../types/Product";
+import {validarProducto} from "../validators/producto";
+import {extraerProducto} from "../util/parsers/producto";
 
-const coleccionProductos = () => obtenerDB().collection<Product>("products");
 
 
 const router = Router();
@@ -26,7 +26,7 @@ router.post('/', verifyToken, async (req, res) =>
 {
     try
     {
-        const error = verificarProducto(req.body);
+        const error = validarProducto(req.body);
         if (error)
         {
             return res.status(400).json({error});

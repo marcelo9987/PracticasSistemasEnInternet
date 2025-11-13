@@ -1,10 +1,10 @@
 import {Router} from "express";
-import {obtenerDB} from "../mongo";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import {JwtPayload, Usuario} from "../types";
-import {verificarUsuarioRegistro} from "../util";
+import {validarUsuarioRegistro} from "../validators/usuario";
+import {coleccionUsuarios} from "../database/mongo";
+import {JwtPayload} from "../types/otros";
 
 const router = Router();
 
@@ -13,7 +13,6 @@ dotenv.config();
 const SECRET = process.env.SECRET;
 
 
-const coleccion = () => obtenerDB().collection<Usuario>("users");
 
 router.get("/", async (req, res) =>
 {
@@ -27,16 +26,22 @@ router.post("/register", async (req, res) =>
     {
         const {username, email, password} = req.body as { username: string, email: string, password: string };
 
-        const errores = verificarUsuarioRegistro({username, email, password});
+        const errores = validarUsuarioRegistro({username, email, password});
         if (errores)
         {
             return res.status(400).json({message: errores});
         }
 
-        const usuarios = coleccion();
+        const existeUsuario = await coleccionUsuarios().findOne({username});
+        if (existeUsuario)
+        {
+            return res.status(400).json({message: "Username already taken"});
+        }
 
-        const exists = await usuarios.findOne({email});
-        if (exists)
+        const usuarios = coleccionUsuarios();
+
+        const creadoConExito = await usuarios.findOne({email});
+        if (creadoConExito)
         {
             return res.status(400).json({message: "User created"});
         }
@@ -59,7 +64,7 @@ router.post("/login", async (req, res) =>
     {
         const {email, password} = req.body as { email: string, password: string };
 
-        const usuarios = coleccion();
+        const usuarios = coleccionUsuarios();
 
         const user = await usuarios.findOne({email});
         if (!user)

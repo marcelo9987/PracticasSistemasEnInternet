@@ -1,4 +1,7 @@
 import {Db, MongoClient} from "mongodb";
+import {Usuario} from "../types/Usuario";
+import {Cart} from "../types/Cart";
+import {Product} from "../types/Product";
 
 let client: MongoClient;
 let dB: Db;
@@ -16,4 +19,8 @@ export const conectarMongoDB = async (): Promise<void> => {
     }
 };
 
-export const obtenerDB = ():Db => dB;
+const obtenerDB = ():Db => dB;
+
+export const coleccionUsuarios = () => obtenerDB().collection<Usuario>("users");
+export const coleccionCarritos = () => obtenerDB().collection<Cart>("cart");
+export const coleccionProductos = () => obtenerDB().collection<Product>("products");
