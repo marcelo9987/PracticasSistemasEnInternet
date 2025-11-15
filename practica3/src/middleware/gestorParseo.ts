@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from "express";
 
 /**
- * Gestor de errores de parseo de JSON en las peticiones.
+ * Gestor de errores de parsing de JSON en las peticiones.
  * @param err Error en el formato JSON
  * @param {e.Request} req
  * @param {e.Response} res
@@ -13,7 +13,7 @@ export const gestorParseo = (err: any, req: Request, res: Response, next: NextFu
     if (err instanceof SyntaxError && 'body' in err)
     {
         // JSON mal formado --> De sintaxis: Falta una coma, una llave, etc.
-        // Que aparezca el body en el error indica que el error viene del parseo del body
+        // Que aparezca el body en el error indica que el error viene del parsing del body
         return res.status(400).send({error: 'JSON mal formado'});
     }
     next();
