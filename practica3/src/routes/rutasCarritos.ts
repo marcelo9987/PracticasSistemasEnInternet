@@ -27,7 +27,7 @@ const reducirStock = async (producto: Product, duplaProductoCantidad: DuplaItemC
 };
 
 
-router.put("/add", verifyToken, async (req:AuthRequest, res) =>
+router.put("/add", verifyToken, async (req: AuthRequest, res) =>
 {
     try
     {
@@ -38,18 +38,19 @@ router.put("/add", verifyToken, async (req:AuthRequest, res) =>
         }
 
 
-        if (!req.user || typeof req.user === "string" || !("id" in req.user)) {
-            return res.status(401).json({ message: "Invalid token payload" });
+        if (!req.user || typeof req.user === "string" || !("id" in req.user))
+        {
+            return res.status(401).json({message: "Invalid token payload"});
         }
 
         const id_usuario = obtenerIdUsuario(auth);
-        if(!id_usuario)
+        if (!id_usuario)
         {
-            console.log("PETICION --> Error al extraer el ID de usuario del token");
+            // console.log("PETICION --> Error al extraer el ID de usuario del token");
             return res.status(401).json({message: "Invalid token"});
         }
 
-        console.log("PETICION --> ID usuario extraído del token:", id_usuario);
+        // console.log("PETICION --> ID usuario extraído del token:", id_usuario);
 
         const cuerpoCorrecto = validarDuplaProductoCantidad(req.body);
         if (cuerpoCorrecto !== null)
@@ -57,20 +58,21 @@ router.put("/add", verifyToken, async (req:AuthRequest, res) =>
             return res.status(400).json({message: cuerpoCorrecto});
         }
 
-        console.log("PETICION --> Cuerpo de la petición validado correctamente:", req.body);
+        // console.log("PETICION --> Cuerpo de la petición validado correctamente:", req.body);
 
         const duplaProductoCantidad: DuplaItemCantidad = extraerDuplaProductoCantidad(req.body);
 
-        console.log("PETICION --> He creado la dupla producto-cantidad:", duplaProductoCantidad);
-        console.log("PETICION --> el tipo de productId es:", typeof duplaProductoCantidad.productId);
+        // console.log("PETICION --> He creado la dupla producto-cantidad:", duplaProductoCantidad);
+        // console.log("PETICION --> el tipo de productId es:", typeof duplaProductoCantidad.productId);
 
         const _id = new ObjectId(duplaProductoCantidad.productId);
 
-        console.log("PETICION --> Buscando producto en BD con ID:", _id);
+        // console.log("PETICION --> Buscando producto en BD con ID:", _id);
 
-        const productoEnBD = await coleccionProductos().findOne({ _id });
-        if (!productoEnBD) {
-            return res.status(404).json({ message: "Product not found" });
+        const productoEnBD = await coleccionProductos().findOne({_id});
+        if (!productoEnBD)
+        {
+            return res.status(404).json({message: "Product not found"});
         }
 
         if (productoEnBD.stock < duplaProductoCantidad.quantity)
@@ -78,10 +80,10 @@ router.put("/add", verifyToken, async (req:AuthRequest, res) =>
             return res.status(400).json({message: "Insufficient stock"});
         }
 
-        console.log("PETICION --> Producto en BD:", productoEnBD);
+        // console.log("PETICION --> Producto en BD:", productoEnBD);
 
         let carrito = (await coleccionCarritos().findOne({userId: new ObjectId(id_usuario)}));
-        if (null===carrito) // Si el carrito no existe, se crea uno nuevo
+        if (null === carrito) // Si el carrito no existe, se crea uno nuevo
         {
             const nuevoCarrito: Cart = {
                 userId: new ObjectId(id_usuario),
@@ -127,7 +129,7 @@ router.put("/add", verifyToken, async (req:AuthRequest, res) =>
 
         await reducirStock(producto, duplaProductoCantidad);
 
-        return res.status(201).json({carritoActualizado: carritoActualizado});
+        return res.status(200).json({carritoActualizado: carritoActualizado});
     }
     catch (err)
     {
@@ -136,7 +138,7 @@ router.put("/add", verifyToken, async (req:AuthRequest, res) =>
 });
 
 
-router.get("/", verifyToken, async (req:AuthRequest, res) =>
+router.get("/", verifyToken, async (req: AuthRequest, res) =>
 {
     try
     {
@@ -146,9 +148,9 @@ router.get("/", verifyToken, async (req:AuthRequest, res) =>
             return res.status(400).json({message: "falta el token"});
         }
         const id_usuario = obtenerIdUsuario(auth);
-        if(!id_usuario)
+        if (!id_usuario)
         {
-            console.log("PETICION GET CARRITO--> Error al extraer el ID de usuario del token");
+            // console.log("PETICION GET CARRITO--> Error al extraer el ID de usuario del token");
             return res.status(401).json({message: "Invalid token"});
         }
 

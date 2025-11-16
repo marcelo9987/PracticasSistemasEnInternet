@@ -6,7 +6,7 @@ import {NextFunction, Request, Response} from "express";
  * @param {e.Request} req
  * @param {e.Response} res
  * @param {e.NextFunction} next
- * @returns {e.Response<anynot fou, Record<string, any>>}
+ * @returns Respuesta con error 400 si el JSON está mal formado, o pasa al siguiente middleware.
  */
 export const gestorParseo = (err: any, req: Request, res: Response, next: NextFunction) =>
 {

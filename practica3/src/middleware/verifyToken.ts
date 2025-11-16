@@ -6,6 +6,12 @@ dotenv.config();
 
 const SECRET = process.env.SECRET;
 
+/**
+ * Extiende la interfaz Request para incluir la propiedad user.
+ * @interface AuthRequest
+ * @extends {Request}
+ * @property {string | jwt.JwtPayload} [user] - (opcional) Información del usuario decodificada del token JWT.
+ */
 export interface AuthRequest extends Request
 {
     user?: string | jwt.JwtPayload;

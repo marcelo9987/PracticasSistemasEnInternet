@@ -11,13 +11,13 @@ export const obtenerIdUsuario = (cadena: string): ObjectId | string =>
 {
     if (!cadena?.startsWith("Bearer "))
     {
-        console.log("Aviso desde obtenerIdUsuario: token faltante o mal formado");
+        // console.log("Aviso desde obtenerIdUsuario: token faltante o mal formado");
         return "Missing or invalid token";
     }
     const token = jwt.decode(cadena.substring(7));
     if (token && typeof token !== "string")
     {
-        console.log("INTERMEDIO --> DESDE obtenerIdUsuario ----> token decodificado:", token);
+        // console.log("INTERMEDIO --> DESDE obtenerIdUsuario ----> token decodificado:", token);
         return token["id"];
     }
     return "ERROR: token invalido o corrupto";

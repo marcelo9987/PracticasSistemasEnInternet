@@ -28,7 +28,7 @@ router.post("/register", async (req, res) =>
         const errores = validarUsuarioRegistro(req.body);
         if (errores)
         {
-            console.log("Errores de validación:", errores);
+            // console.log("Errores de validación:", errores);
             return res.status(400).json({message: errores});
         }
 
@@ -66,7 +66,7 @@ router.post("/register", async (req, res) =>
     }
     catch (err)
     {
-        console.log(err);
+        // console.log(err);
         res.status(500).json({message: err});
     }
 });

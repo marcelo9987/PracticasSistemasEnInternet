@@ -26,7 +26,7 @@ export const validarUsuarioRegistro = (datos: any): string | null =>
 
     if (!validarEmail(email))
     {
-        return "Error: Email mal formado";
+        return "Error: Email mal formado, espero una cadena formateada como: usuario@dominio.extension donde la extension ha de tener al menos 2 caracteres";
     }
 
 

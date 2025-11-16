@@ -1,5 +1,5 @@
 /**
- * JwtPayloa
+ * JwtPayload
  * @param {string} id - ID del usuario
  * @param {string} email - Email del usuario
  */
