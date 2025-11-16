@@ -6,7 +6,7 @@ import {NextFunction, Request, Response} from "express";
  * @param {e.Request} req
  * @param {e.Response} res
  * @param {e.NextFunction} next
- * @returns {e.Response<any, Record<string, any>>}
+ * @returns {e.Response<anynot fou, Record<string, any>>}
  */
 export const gestorParseo = (err: any, req: Request, res: Response, next: NextFunction) =>
 {

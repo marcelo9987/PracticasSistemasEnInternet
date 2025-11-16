@@ -33,7 +33,7 @@ export const extraerProducto = (datos: any): Product =>
  */
 export const extraerDuplaProductoCantidad = (datos: any): DuplaItemCantidad =>
 {
-    const productId: string = datos.productId;
+    const productId: string = datos.productId.trim();
 
     const quantity: number = datos.quantity;
 

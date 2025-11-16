@@ -1,12 +1,12 @@
 import {Router} from "express";
 import {ObjectId} from "mongodb";
-import {verifyToken} from "../middleware/verifyToken";
+import {AuthRequest, verifyToken} from "../middleware/verifyToken";
 import {validarDuplaProductoCantidad} from "../validators/producto";
 import {extraerDuplaProductoCantidad} from "../util/parsers/producto";
-import {obtenerIdUsuario} from "../util/parsers/usuario";
 import {coleccionCarritos, coleccionProductos} from "../database/mongo";
 import {DuplaItemCantidad, Product} from "../types/Product";
 import {Cart} from "../types/Cart";
+import {obtenerIdUsuario} from "../util/parsers/usuario";
 
 
 const router = Router();
@@ -17,17 +17,17 @@ const router = Router();
  * @param {DuplaItemCantidad} duplaProductoCantidad La dupla que contiene el ID del producto y la cantidad a reducir.
  * @returns {Promise<void>} Una promesa que se resuelve cuando el stock ha sido reducido.
  */
-const reducirStock = async (producto: Product | null, duplaProductoCantidad: DuplaItemCantidad) =>
+const reducirStock = async (producto: Product, duplaProductoCantidad: DuplaItemCantidad): Promise<void> =>
 {
     // console.log("Producto antes de actualizar stock:", producto);
-    const nuevoStock = producto!.stock - duplaProductoCantidad.quantity;
+    const nuevoStock = producto.stock - duplaProductoCantidad.quantity;
     // console.log("Nuevo stock a actualizar:", nuevoStock);
     await coleccionProductos()
         .updateOne({_id: new ObjectId(duplaProductoCantidad.productId)}, {$set: {stock: nuevoStock}});
 };
 
 
-router.put("/add", verifyToken, async (req, res) =>
+router.put("/add", verifyToken, async (req:AuthRequest, res) =>
 {
     try
     {
@@ -36,46 +36,64 @@ router.put("/add", verifyToken, async (req, res) =>
         {
             return res.status(400).json({message: "falta el token"});
         }
-        const id_usuario: ObjectId | string = obtenerIdUsuario(auth);
-        if (typeof id_usuario === "string")
-        {
-            return res.status(400).json({message: id_usuario});
+
+
+        if (!req.user || typeof req.user === "string" || !("id" in req.user)) {
+            return res.status(401).json({ message: "Invalid token payload" });
         }
 
-        const cuerpoCorrecto: String | null = validarDuplaProductoCantidad(req.body);
+        const id_usuario = obtenerIdUsuario(auth);
+        if(!id_usuario)
+        {
+            console.log("PETICION --> Error al extraer el ID de usuario del token");
+            return res.status(401).json({message: "Invalid token"});
+        }
+
+        console.log("PETICION --> ID usuario extraído del token:", id_usuario);
+
+        const cuerpoCorrecto = validarDuplaProductoCantidad(req.body);
         if (cuerpoCorrecto !== null)
         {
             return res.status(400).json({message: cuerpoCorrecto});
         }
 
-        if (await coleccionProductos().findOne({_id: new ObjectId(req.body.productId as string)}) === null)
-        {
-            return res.status(404).json({message: "Product not found"});
-        }
+        console.log("PETICION --> Cuerpo de la petición validado correctamente:", req.body);
 
         const duplaProductoCantidad: DuplaItemCantidad = extraerDuplaProductoCantidad(req.body);
 
-        const productoEnBD = await coleccionProductos().findOne({_id: new ObjectId(duplaProductoCantidad.productId)});
-        if (productoEnBD === null)
-        {
-            return res.status(404).json({message: "Product not found"});
-        }
-        if (productoEnBD.stock < duplaProductoCantidad.quantity)
-        {
-            return res.status(400).json({message: `Error:  Insufficient stock`});
+        console.log("PETICION --> He creado la dupla producto-cantidad:", duplaProductoCantidad);
+        console.log("PETICION --> el tipo de productId es:", typeof duplaProductoCantidad.productId);
+
+        const _id = new ObjectId(duplaProductoCantidad.productId);
+
+        console.log("PETICION --> Buscando producto en BD con ID:", _id);
+
+        const productoEnBD = await coleccionProductos().findOne({ _id });
+        if (!productoEnBD) {
+            return res.status(404).json({ message: "Product not found" });
         }
 
-        const carrito = (await coleccionCarritos().findOne({userId: id_usuario}));
-        if (carrito === null) // Si el carrito no existe, se crea uno nuevo
+        if (productoEnBD.stock < duplaProductoCantidad.quantity)
+        {
+            return res.status(400).json({message: "Insufficient stock"});
+        }
+
+        console.log("PETICION --> Producto en BD:", productoEnBD);
+
+        let carrito = (await coleccionCarritos().findOne({userId: new ObjectId(id_usuario)}));
+        if (null===carrito) // Si el carrito no existe, se crea uno nuevo
         {
             const nuevoCarrito: Cart = {
-                userId: id_usuario,
+                userId: new ObjectId(id_usuario),
                 items: [duplaProductoCantidad],
             };
             const resultado = await coleccionCarritos().insertOne(nuevoCarrito);
             // console.log("Nuevo carrito creado con ID:", resultado.insertedId);
-            const carritoActualizado = await coleccionCarritos().findOne({_id: resultado.insertedId});
-            return res.status(201).json({carritoActualizado});
+            carrito = await coleccionCarritos().findOne({_id: resultado.insertedId});
+            if (carrito === null)
+            {
+                return res.status(500).json({message: "Error creating cart"});
+            }
         }
         // Si el carrito YA EXISTE, se actualiza
         const indiceProducto = carrito.items.findIndex(item => item.productId === duplaProductoCantidad.productId);
@@ -92,12 +110,19 @@ router.put("/add", verifyToken, async (req, res) =>
             // El producto no está en el carrito, se agrega
             carrito.items.push(duplaProductoCantidad);
         }
+
+        //--
+
         const carritoActualizado = await coleccionCarritos()
-            .findOneAndUpdate({userId: id_usuario}, {$set: {items: carrito.items}}, {returnDocument: 'after'});
+            .findOneAndUpdate({userId: new ObjectId(id_usuario)}, {$set: {items: carrito.items}}, {returnDocument: 'after'});
 
         //Llegados a este punto, el carrito se ha actualizado correctamente y procedemos a la sustracción de stock en la colección de productos
         const producto: Product | null = await coleccionProductos()
             .findOne({_id: new ObjectId(duplaProductoCantidad.productId)});
+        if (producto === null)
+        {
+            return res.status(404).json({message: "Product not found for stock reduction"});
+        }
 
 
         await reducirStock(producto, duplaProductoCantidad);
@@ -111,7 +136,7 @@ router.put("/add", verifyToken, async (req, res) =>
 });
 
 
-router.get("/", verifyToken, async (req, res) =>
+router.get("/", verifyToken, async (req:AuthRequest, res) =>
 {
     try
     {
@@ -120,13 +145,14 @@ router.get("/", verifyToken, async (req, res) =>
         {
             return res.status(400).json({message: "falta el token"});
         }
-        const id_usuario: ObjectId | string = obtenerIdUsuario(auth);
-        if (typeof id_usuario === "string")
+        const id_usuario = obtenerIdUsuario(auth);
+        if(!id_usuario)
         {
-            return res.status(400).json({message: id_usuario});
+            console.log("PETICION GET CARRITO--> Error al extraer el ID de usuario del token");
+            return res.status(401).json({message: "Invalid token"});
         }
 
-        const carrito = (await coleccionCarritos().findOne({userId: id_usuario}));
+        const carrito = (await coleccionCarritos().findOne({userId: new ObjectId(id_usuario)}));
         if (carrito === null)
         {
             return res.status(404).json({message: "Carrito no encontrado"});

@@ -6,18 +6,18 @@ dotenv.config();
 
 const SECRET = process.env.SECRET;
 
-interface authRequest extends Request
+export interface AuthRequest extends Request
 {
     user?: string | jwt.JwtPayload;
 }
 
 /**
  * Middleware encargado de verificar el token JWT de las solicitudes.
- * @param {authRequest} req Solicitud entrante con posible token JWT.
+ * @param {AuthRequest} req Solicitud entrante con posible token JWT.
  * @param {e.Response} res Respuesta.
  * @param {e.NextFunction} next
  */
-export const verifyToken = (req: authRequest, res: Response, next: NextFunction): void =>
+export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction): void =>
 {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
