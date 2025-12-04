@@ -1,9 +1,5 @@
-import { gql } from "apollo-server";
 import {IResolvers} from "@graphql-tools/utils";
 import {signToken} from "../auth";
-import {AuthPayload} from "../types/AuthPayload";
-import {ObjectId} from "mongodb";
-import {User} from "../types/User";
 import {createUser, findUserById} from "../collections/users";
 
 export const resolvers: IResolvers ={
@@ -11,6 +7,7 @@ export const resolvers: IResolvers ={
 
     },
     Mutation:{
+        // REGISTRAR
         register: async (
             _,
             { input }: {input:{ username: string ,email: string; password: string }}
@@ -26,6 +23,9 @@ export const resolvers: IResolvers ={
 
             const tokenRecibido = signToken(userId);
             return {user:_user,token:tokenRecibido}
-        }
+        },
+        //----//
+        // INICIAR SESION
+        // login: async(_, {input:{email: string, password:string}})
     }
 }
