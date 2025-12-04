@@ -1,0 +1,59 @@
+import {getDB} from "../db/mongo";
+import bcrypt from "bcryptjs";
+import {ObjectId} from "mongodb";
+import {User} from "../types/User";
+
+const COLLECTION = "users";
+
+/**
+ * Valida el formato de un email
+ * @param {string} email email a validar
+ * @returns {boolean} true si es válido, false si no lo es
+ */
+const validarEmail: (email: string) => boolean = (email: string): boolean =>
+{
+    const regex = /^((?!\.)[\w\-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/;
+    return regex.test(email);
+};
+
+const usuarioEnColeccion: (email: string) => Promise<boolean> = async (email:string):Promise<boolean> =>
+{
+    const db = getDB();
+    return ((await db.collection(COLLECTION).findOne({email: email}))===null);
+}
+
+const usuarioValido:(email: string) => Promise<boolean> = async (email: string) =>
+{
+    if(!validarEmail(email))
+    {
+        throw new Error("ERROR! El email provisto está mal formado");
+    }
+    if(await usuarioEnColeccion(email))
+    {
+        throw new Error("El email ya está registrado a otro usuario");
+    }
+    return true;
+};
+export const createUser = async (username:string, email: string, password: string) => {
+    const db = getDB();
+    const contrasenhaEncriptada = await bcrypt.hash(password, 10);
+
+    if(!(await usuarioValido(email)))
+    {
+        throw new Error("Ha habido un error al crear el usuario");
+    }
+
+    const result = await db.collection(COLLECTION).insertOne({
+        username: username,
+        email:email,
+        password: contrasenhaEncriptada,
+        createdAt:new Date()
+    });
+
+    return result.insertedId.toString();
+}
+
+export const findUserById = async (id: string) => {
+    const db = getDB();
+    return await db.collection<User>(COLLECTION).findOne({_id: new ObjectId(id)})
+}
