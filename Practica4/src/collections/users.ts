@@ -57,3 +57,23 @@ export const findUserById = async (id: string) => {
     const db = getDB();
     return await db.collection<User>(COLLECTION).findOne({_id: new ObjectId(id)})
 }
+export const logearUsuario= async (email: string, password: string) =>
+{
+    if( !(await usuarioValido(email)) )
+    {
+        throw new Error("El usuario no existe");
+    }
+    const db = getDB();
+    const usuario = await db.collection(COLLECTION).findOne({email: email});
+    if(!usuario)
+    {
+        throw new Error("El usuario no existe");
+    }
+
+    const contrasenhaCorrecta = await bcrypt.compare(password, usuario.password);
+    if(!contrasenhaCorrecta)
+    {
+        throw new Error("La contraseña es incorrecta");
+    }
+    return usuario;
+}
