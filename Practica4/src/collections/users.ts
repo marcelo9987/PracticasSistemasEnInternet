@@ -19,18 +19,23 @@ const validarEmail: (email: string) => boolean = (email: string): boolean =>
 const usuarioEnColeccion: (email: string) => Promise<boolean> = async (email:string):Promise<boolean> =>
 {
     const db = getDB();
-    return ((await db.collection(COLLECTION).findOne({email: email}))===null);
+    return ((await db.collection(COLLECTION).findOne({email: email}))!==null);
 }
 
-const usuarioValido:(email: string) => Promise<boolean> = async (email: string) =>
+const usuarioValido = async (email: string, autenticacion:boolean=false):Promise<boolean> =>
 {
     if(!validarEmail(email))
     {
         throw new Error("ERROR! El email provisto está mal formado");
     }
-    if(await usuarioEnColeccion(email))
+    const enColeccion = await usuarioEnColeccion(email);
+    if(enColeccion && !autenticacion)
     {
         throw new Error("El email ya está registrado a otro usuario");
+    }
+    if(!enColeccion && autenticacion)
+    {
+        throw new Error("El email no está registrado");
     }
     return true;
 };
@@ -59,7 +64,7 @@ export const findUserById = async (id: string) => {
 }
 export const logearUsuario= async (email: string, password: string) =>
 {
-    if( !(await usuarioValido(email)) )
+    if( !(await usuarioValido(email, true)) )
     {
         throw new Error("El usuario no existe");
     }
