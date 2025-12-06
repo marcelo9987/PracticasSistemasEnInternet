@@ -36,7 +36,7 @@ export const getUserFromToken = async (token: string) =>
         return null;
     }
     const db = getDB();
-    return await db.collection("usuarios").findOne({
+    return await db.collection("users").findOne({
         _id: new ObjectId(payload.userId)
     })
 }

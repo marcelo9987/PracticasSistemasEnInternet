@@ -62,6 +62,13 @@ export const findUserById = async (id: string) => {
     const db = getDB();
     return await db.collection<User>(COLLECTION).findOne({_id: new ObjectId(id)})
 }
+
+export const obtenerUsuarios= async ()=>
+{
+    const db = getDB();
+    return await db.collection<User>(COLLECTION).find().toArray();
+}
+
 export const logearUsuario= async (email: string, password: string) =>
 {
     if( !(await usuarioValido(email, true)) )

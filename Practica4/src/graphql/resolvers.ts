@@ -1,9 +1,18 @@
 import {IResolvers} from "@graphql-tools/utils";
 import {signToken} from "../auth";
-import {createUser, findUserById, logearUsuario} from "../collections/users";
+import {createUser, findUserById, logearUsuario, obtenerUsuarios} from "../collections/users";
 
 export const resolvers: IResolvers ={
     Query: {
+        //Consultar usuarios
+        users: async(_,__,context) =>
+        {
+          if(!context.user)
+          {
+              throw new Error("No autenticado!");
+          }
+          return await obtenerUsuarios();
+        },
 
     },
     Mutation:{
