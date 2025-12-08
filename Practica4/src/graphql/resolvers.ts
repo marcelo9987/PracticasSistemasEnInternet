@@ -199,6 +199,36 @@ export const resolvers: IResolvers = {
             return actualizarProyecto(id, proyectoActualizado);
         },
 
+        addMember: async (_, {projectId,userId}:{projectId:string,userId:string},contexto): Promise<Project> =>
+        {
+            if (!contexto.user)
+            {
+                throw new Error("Error: No tienes permisos para agregar miembros a un proyecto. Debes iniciar sesión.");
+            }
+            const proyectoActual = await findProjectById(projectId);
+            if (!proyectoActual)
+            {
+                throw new Error("Error: El proyecto al que intentas agregar un miembro no existe.");
+            }
+            if (proyectoActual.owner.toString() !== contexto.user._id.toString())
+            {
+                throw new Error("Error: No tienes permisos para agregar miembros a este proyecto. Solo el propietario puede hacerlo.");
+            }
+
+            await comprobarUsuarioId(userId);
+
+            if(proyectoActual.members.map(member => member.toString()).includes(userId))
+            {
+                throw new Error("Error: El usuario ya es miembro de este proyecto.");
+            }
+
+            const proyectoActualizado: Project = {
+                ...proyectoActual, members: [...proyectoActual.members, new ObjectId(userId)]
+            };
+            return actualizarProyecto(projectId, proyectoActualizado);
+
+        },
+
         // ELIMINAR PROYECTO
         deleteProject: async (_, {id}: {
             id: string

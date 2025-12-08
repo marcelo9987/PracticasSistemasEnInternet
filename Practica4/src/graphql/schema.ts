@@ -102,7 +102,7 @@ export const typeDefs = gql`
         createProject(input: CreateProjectInput!):Project 
         updateProject(id: ID!, input: UpdateProjectInput!): Project!
         deleteProject(id: ID!):Boolean 
-        addMember(projectId: ID!, userId: ID!): Project! #todo
+        addMember(projectId: ID!, userId: ID!): Project!
         createTask(projectId: ID!, input: TaskInput!): Task! 
         updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!  #todo
     }
