@@ -1,11 +1,25 @@
 import {IResolvers} from "@graphql-tools/utils";
 import {signToken} from "../auth";
-import {createUser, findUserById, logearUsuario, obtenerUsuarios} from "../collections/users";
+import {
+    comprobarUsuarioId,
+    createUser,
+    findUserById,
+    logearUsuario,
+    obtenerUsuarios,
+
+} from "../collections/users";
 import {Project} from "../types/Project";
 import {
-    actualizarProyecto, crearProyecto, eliminarProyecto, findProjectById, validarFechasProyecto
+    actualizarProyecto,
+    crearProyecto,
+    eliminarProyecto,
+    findProjectById,
+    proyectoDeUsuario,
+    validarFechasProyecto
 } from "../collections/proyectos";
 import {ObjectId} from "mongodb";
+import {Task, TaskPriority, TaskStatus} from "../types/Task";
+import {eliminarTareaPorId, insertarTarea, obtenerTareaPorId, obtenerTareaPorProyecto} from "../collections/tasks";
 
 export const resolvers: IResolvers = {
     Project: {
@@ -15,8 +29,22 @@ export const resolvers: IResolvers = {
         }, members: async (project: Project) =>
         {
             return Promise.all(project.members.map(id => findUserById(id.toString())));
+        }, tasks: async (project: Project) =>
+        {
+            return await obtenerTareaPorProyecto(project._id!.toString());
         }
-    }, Query: {
+    },
+    Task: {
+        project: async (task: Task) =>
+        {
+            return await findProjectById(task.project.toString());
+        }
+        , assignedTo: async (task: Task) =>
+        {
+            return await findUserById(task.assignedTo!.toString());
+        }
+    }
+    ,Query: {
         //Consultar usuarios
         users: async (_, __, context) =>
         {
@@ -94,11 +122,7 @@ export const resolvers: IResolvers = {
             }
 
             const nuevoProyecto: Project = {
-                name: name, description: description || "",
-                startDate: new Date(startDate),
-                endDate: new Date(endDate),
-                owner: contexto.user._id.toString(),
-                members: [contexto.user._id.toString(), ...(members ?? [])],
+                name: name, description: description || "", startDate: new Date(startDate), endDate: new Date(endDate), owner: contexto.user._id.toString(), members: [contexto.user._id.toString(), ...(members ?? [])],
             };
             const id = await crearProyecto(nuevoProyecto);
             const proyectoCreado: Project | null = await findProjectById(id);
@@ -108,33 +132,6 @@ export const resolvers: IResolvers = {
             }
             return proyectoCreado;
         },
-
-
-        // ELIMINAR PROYECTO
-        deleteProject: async (_, {id}: { //fixme: eliminar las tareas asociadas
-            id: string
-        }, context): Promise<boolean> =>
-        {
-            if (!context.user)
-            {
-                throw new Error("Error: No tienes permisos para eliminar un proyecto. Debes iniciar sesión primero.");
-            }
-
-            const proyecto: Project | null = await findProjectById(id);
-            if (!proyecto)
-            {
-                throw new Error("Error: El proyecto que intentas eliminar no existe.");
-            }
-            if (proyecto.owner.toString() !== context.user._id.toString())
-            {
-                throw new Error("Error: No tienes permisos para eliminar este proyecto. Solo el propietario puede eliminarlo.");
-            }
-
-            const resultado = await eliminarProyecto(id);
-
-            return Boolean(resultado);
-        },
-
 
         // Actualizar Proyecto
         updateProject: async (_, {id, input}: {
@@ -175,7 +172,106 @@ export const resolvers: IResolvers = {
                 ...proyectoActual, description: nuevaDescripcion || proyectoActual.description, endDate: nuevaFechaFin
             };
             return actualizarProyecto(id, proyectoActualizado);
+        },
+
+        // ELIMINAR PROYECTO
+        deleteProject: async (_, {id}: {
+            id: string
+        }, context): Promise<boolean> =>
+        {
+            if (!context.user)
+            {
+                throw new Error("Error: No tienes permisos para eliminar un proyecto. Debes iniciar sesión primero.");
+            }
+
+            const proyecto: Project | null = await findProjectById(id);
+            if (!proyecto)
+            {
+                throw new Error("Error: El proyecto que intentas eliminar no existe.");
+            }
+            if (proyecto.owner.toString() !== context.user._id.toString())
+            {
+                throw new Error("Error: No tienes permisos para eliminar este proyecto. Solo el propietario puede eliminarlo.");
+            }
+
+            const tareasProyecto: Task[] =  await obtenerTareaPorProyecto(id);
+            if(tareasProyecto.length!==0)
+            {
+                for (const tarea of tareasProyecto)
+                {
+                    if(!tarea._id)
+                    {
+                        continue;
+                    }
+                    const resultadoEliminacion = await eliminarTareaPorId(tarea._id.toString());
+                    if(!resultadoEliminacion)
+                    {
+                        throw new Error(`Error: No se pudo eliminar la tarea con id ${tarea._id.toString()} asociada al proyecto.`);
+                    }
+                }
+            }
+
+            const resultado = await eliminarProyecto(id);
+
+
+            return Boolean(resultado);
+        },
+
+
+
+        createTask: async (_,{projectId,input}:{projectId: string, input: {
+            title: String
+            assignedTo: ObjectId
+            status: string
+            priority: string
+            dueDate: string
+        }},contexto): Promise<Task> =>
+        {
+            if (!contexto.user)
+            {
+                throw new Error("Error: No tienes permisos para crear una tarea. Debes iniciar sesión.");
+            }
+
+            if(!(await proyectoDeUsuario(contexto.user._id.toString(), projectId)))
+            {
+                throw new Error("Error: No tienes permisos para crear una tarea en este proyecto.");
+            }
+
+            const { title, assignedTo, status, priority, dueDate } = input;
+
+            if(isNaN(new Date(dueDate).getTime()))
+            {
+                throw new Error("Error: La fecha de vencimiento proporcionada no es válida.");
+            }
+
+            console.log("AssignedTo:", assignedTo);
+
+            await comprobarUsuarioId(assignedTo.toString());
+
+            if(!status || !(status in TaskStatus))
+            {
+                throw new Error("Error: El estado de la tarea no es válido.");
+            }
+            if(!priority || !(priority in TaskPriority))
+            {
+                throw new Error("Error: La prioridad de la tarea no es válida.");
+            }
+
+            const tareaNueva: Task =
+                {
+                    title: title,
+                    project: new ObjectId(projectId),
+                    assignedTo: assignedTo,
+                    status: status as TaskStatus,
+                    priority: priority as TaskPriority,
+                    dueDate: dueDate
+                }
+
+            const resultadoOperacion = await insertarTarea(tareaNueva);
+            return await obtenerTareaPorId(resultadoOperacion);
         }
+
+
     }
 };
 

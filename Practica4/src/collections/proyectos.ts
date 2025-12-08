@@ -1,6 +1,8 @@
 import {getDB} from "../db/mongo";
 import {Project} from "../types/Project";
 import {ObjectId} from "mongodb";
+import {Task} from "../types/Task";
+import {encontrarTareasPorProyecto} from "./tasks";
 
 /**
  * Nombre de la colección de proyectos en la base de datos
@@ -39,12 +41,19 @@ export const actualizarProyecto = async (id:string, proyectoActualizado:Project)
         { _id: new ObjectId(id) },
         { $set: proyectoActualizado }
     );
+
+    const tareasAsociadas:Array<Task> = await encontrarTareasPorProyecto(id);
+
     const proyectoRemoto:Project|null = await db.collection<Project>(COLLECTION).findOne({_id: new ObjectId(id)});
     if(!proyectoRemoto)
     {
         throw new Error("Error actualizando el proyecto");
     }
-    return proyectoRemoto;
+
+    return {
+        ...proyectoRemoto,
+        tasks: tareasAsociadas.map(tarea => tarea._id!)
+    };
 }
 
 export const eliminarProyecto= async (id: string): Promise<boolean> => {
@@ -53,6 +62,20 @@ export const eliminarProyecto= async (id: string): Promise<boolean> => {
     return resultado.deletedCount === 1;
 }
 
+export const proyectoDeUsuario = async (id_usuario: string, id_proyecto: string): Promise<boolean> => {
+    const db = getDB();
+    const proyecto = await db.collection<Project>(COLLECTION).findOne({_id: new ObjectId(id_proyecto)});
+    if(!proyecto) {
+        throw new Error("El proyecto no existe");
+    }
+    if((proyecto.owner.toString() === id_usuario ) || (proyecto.members.map(member => member.toString()).includes(id_usuario)))
+    {
+        return true;
+    }
+
+    return false;
+
+}
 
 
 export const findProjectById = async (id: string): Promise<Project | null> => {

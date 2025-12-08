@@ -22,6 +22,16 @@ const usuarioEnColeccion: (email: string) => Promise<boolean> = async (email:str
     return ((await db.collection(COLLECTION).findOne({email: email}))!==null);
 }
 
+export const comprobarUsuarioId= async (id:string) =>
+{
+    const db = getDB();
+    const usuario = await db.collection<User>(COLLECTION).findOne({_id: new ObjectId(id.toString())});
+    if(!usuario)
+    {
+        throw new Error("El usuario con el id proporcionado no existe");
+    }
+}
+
 const usuarioValido = async (email: string, autenticacion:boolean=false):Promise<boolean> =>
 {
     if(!validarEmail(email))

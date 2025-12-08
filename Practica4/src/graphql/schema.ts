@@ -80,7 +80,6 @@ export const typeDefs = gql`
     
     input TaskInput{
         title: String!
-        project: ID!
         assignedTo: ID
         status: TaskStatus
         priority: TaskPriority!
@@ -100,11 +99,11 @@ export const typeDefs = gql`
         register(input: RegisterInput!): AuthPayload
         login(input: LoginInput!): AuthPayload
     # Autenticadas
-        createProject(input: CreateProjectInput!):Project #testme // Cuasi-Probado
-        updateProject(id: ID!, input: UpdateProjectInput!): Project! #testme
-        deleteProject(id: ID!):Boolean
+        createProject(input: CreateProjectInput!):Project 
+        updateProject(id: ID!, input: UpdateProjectInput!): Project!
+        deleteProject(id: ID!):Boolean 
         addMember(projectId: ID!, userId: ID!): Project! #todo
-        createTask(projectId: ID!, input: TaskInput!): Task! #todo
+        createTask(projectId: ID!, input: TaskInput!): Task! 
         updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!  #todo
     }
         `;
