@@ -1,25 +1,25 @@
 import {IResolvers} from "@graphql-tools/utils";
 import {signToken} from "../auth";
-import {
-    comprobarUsuarioId,
-    createUser,
-    findUserById,
-    logearUsuario,
-    obtenerUsuarios,
-
-} from "../collections/users";
+import {comprobarUsuarioId, createUser, findUserById, logearUsuario, obtenerUsuarios,} from "../collections/users";
 import {Project} from "../types/Project";
 import {
     actualizarProyecto,
     crearProyecto,
     eliminarProyecto,
-    findProjectById, obtenerProyectosDelUsuario,
+    findProjectById,
+    obtenerProyectosDelUsuario,
     proyectoDeUsuario,
     validarFechasProyecto
 } from "../collections/proyectos";
 import {ObjectId} from "mongodb";
 import {Task, TaskPriority, TaskStatus} from "../types/Task";
-import {eliminarTareaPorId, insertarTarea, obtenerTareaPorId, obtenerTareaPorProyecto} from "../collections/tasks";
+import {
+    actualizarTarea,
+    eliminarTareaPorId,
+    insertarTarea,
+    obtenerTareaPorId,
+    obtenerTareaPorProyecto
+} from "../collections/tasks";
 
 export const resolvers: IResolvers = {
     Project: {
@@ -44,7 +44,7 @@ export const resolvers: IResolvers = {
             return await findUserById(task.assignedTo!.toString());
         }
     }
-    ,Query: {
+    , Query: {
         //Consultar usuarios
         users: async (_, __, context) =>
         {
@@ -62,18 +62,18 @@ export const resolvers: IResolvers = {
             }
             return await obtenerProyectosDelUsuario(context.user._id.toString());
         },
-        projectDetails: async (_, {id}:{id:string}, context) =>
+        projectDetails: async (_, {id}: { id: string }, context) =>
         {
             if (!context.user)
             {
                 throw new Error("No autenticado!");
             }
             const proyecto = await findProjectById(id);
-            if(!proyecto)
+            if (!proyecto)
             {
                 throw new Error("El proyecto no existe");
             }
-            if(!(await proyectoDeUsuario(context.user._id.toString(), id)))
+            if (!(await proyectoDeUsuario(context.user._id.toString(), id)))
             {
                 throw new Error("No tienes permisos para ver este proyecto");
             }
@@ -199,7 +199,7 @@ export const resolvers: IResolvers = {
             return actualizarProyecto(id, proyectoActualizado);
         },
 
-        addMember: async (_, {projectId,userId}:{projectId:string,userId:string},contexto): Promise<Project> =>
+        addMember: async (_, {projectId, userId}: { projectId: string, userId: string }, contexto): Promise<Project> =>
         {
             if (!contexto.user)
             {
@@ -217,7 +217,7 @@ export const resolvers: IResolvers = {
 
             await comprobarUsuarioId(userId);
 
-            if(proyectoActual.members.map(member => member.toString()).includes(userId))
+            if (proyectoActual.members.map(member => member.toString()).includes(userId))
             {
                 throw new Error("Error: El usuario ya es miembro de este proyecto.");
             }
@@ -249,17 +249,17 @@ export const resolvers: IResolvers = {
                 throw new Error("Error: No tienes permisos para eliminar este proyecto. Solo el propietario puede eliminarlo.");
             }
 
-            const tareasProyecto: Task[] =  await obtenerTareaPorProyecto(id);
-            if(tareasProyecto.length!==0)
+            const tareasProyecto: Task[] = await obtenerTareaPorProyecto(id);
+            if (tareasProyecto.length !== 0)
             {
                 for (const tarea of tareasProyecto)
                 {
-                    if(!tarea._id)
+                    if (!tarea._id)
                     {
                         continue;
                     }
                     const resultadoEliminacion = await eliminarTareaPorId(tarea._id.toString());
-                    if(!resultadoEliminacion)
+                    if (!resultadoEliminacion)
                     {
                         throw new Error(`Error: No se pudo eliminar la tarea con id ${tarea._id.toString()} asociada al proyecto.`);
                     }
@@ -273,28 +273,29 @@ export const resolvers: IResolvers = {
         },
 
 
-
-        createTask: async (_,{projectId,input}:{projectId: string, input: {
-            title: String
-            assignedTo: ObjectId
-            status: string
-            priority: string
-            dueDate: string
-        }},contexto): Promise<Task> =>
+        createTask: async (_, {projectId, input}: {
+            projectId: string, input: {
+                title: String
+                assignedTo: ObjectId
+                status: string
+                priority: string
+                dueDate: string
+            }
+        }, contexto): Promise<Task> =>
         {
             if (!contexto.user)
             {
                 throw new Error("Error: No tienes permisos para crear una tarea. Debes iniciar sesión.");
             }
 
-            if(!(await proyectoDeUsuario(contexto.user._id.toString(), projectId)))
+            if (!(await proyectoDeUsuario(contexto.user._id.toString(), projectId)))
             {
                 throw new Error("Error: No tienes permisos para crear una tarea en este proyecto.");
             }
 
-            const { title, assignedTo, status, priority, dueDate } = input;
+            const {title, assignedTo, status, priority, dueDate} = input;
 
-            if(isNaN(new Date(dueDate).getTime()))
+            if (isNaN(new Date(dueDate).getTime()))
             {
                 throw new Error("Error: La fecha de vencimiento proporcionada no es válida.");
             }
@@ -303,11 +304,11 @@ export const resolvers: IResolvers = {
 
             await comprobarUsuarioId(assignedTo.toString());
 
-            if(!status || !(status in TaskStatus))
+            if (!status || !(status in TaskStatus))
             {
                 throw new Error("Error: El estado de la tarea no es válido.");
             }
-            if(!priority || !(priority in TaskPriority))
+            if (!priority || !(priority in TaskPriority))
             {
                 throw new Error("Error: La prioridad de la tarea no es válida.");
             }
@@ -320,10 +321,40 @@ export const resolvers: IResolvers = {
                     status: status as TaskStatus,
                     priority: priority as TaskPriority,
                     dueDate: dueDate
-                }
+                };
 
             const resultadoOperacion = await insertarTarea(tareaNueva);
             return await obtenerTareaPorId(resultadoOperacion);
+        },
+        updateTaskStatus: async (_, {taskId, status}: { taskId: string, status: string }, contexto): Promise<Task> =>
+        {
+            if (!contexto.user)
+            {
+                throw new Error("Error: No tienes permisos para actualizar una tarea. Debes iniciar sesión.");
+            }
+
+            const tareaActual = await obtenerTareaPorId(taskId);
+            if (!tareaActual)
+            {
+                throw new Error("Error: La tarea que intentas actualizar no existe.");
+            }
+
+            const proyectoAsociado = await findProjectById(tareaActual.project.toString());
+            if (!proyectoAsociado || !(await proyectoDeUsuario(contexto.user._id.toString(), proyectoAsociado._id!.toString())))
+            {
+                throw new Error("Error: No tienes permisos para actualizar esta tarea.");
+            }
+
+            if (!status || !(status in TaskStatus))
+            {
+                throw new Error("Error: El estado de la tarea no es válido.");
+            }
+
+            const tareaActualizada: Task = {
+                ...tareaActual,
+                status: status as TaskStatus
+            };
+            return await actualizarTarea(taskId,tareaActualizada);
         }
 
 

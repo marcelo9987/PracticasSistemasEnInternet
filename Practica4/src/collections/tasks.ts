@@ -40,3 +40,22 @@ export const eliminarTareaPorId = async (id: string): Promise<boolean> =>
     const result = await db.collection(COLLECTION).deleteOne({_id: new ObjectId(id)});
     return result.deletedCount === 1;
 }
+
+export const actualizarTarea= async(id: string, tareaActualizada: Task): Promise<Task> =>
+{
+    const db = getDB();
+    const resultadoOperacion = await db.collection(COLLECTION).updateOne(
+        { _id: new ObjectId(id) },
+        { $set: tareaActualizada }
+    );
+    if(resultadoOperacion.matchedCount <= 0)
+    {
+        throw new Error("Error actualizando la tarea");
+    }
+    const tareaRemota:Task|null = await db.collection<Task>(COLLECTION).findOne({_id: new ObjectId(id)});
+    if(!tareaRemota)
+    {
+        throw new Error("Error actualizando la tarea");
+    }
+    return tareaRemota;
+}

@@ -104,6 +104,6 @@ export const typeDefs = gql`
         deleteProject(id: ID!):Boolean 
         addMember(projectId: ID!, userId: ID!): Project!
         createTask(projectId: ID!, input: TaskInput!): Task! 
-        updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!  #todo
+        updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!
     }
         `;
