@@ -19,5 +19,5 @@ export type Task = {
     assignedTo?: ObjectId
     status: TaskStatus
     priority: TaskPriority
-    dueDate: String
+    dueDate: Date
 }

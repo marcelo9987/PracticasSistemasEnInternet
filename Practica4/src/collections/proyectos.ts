@@ -37,7 +37,7 @@ export const crearProyecto = async (proyecto: Project): Promise<string> => {
 export const actualizarProyecto = async (id:string, proyectoActualizado:Project): Promise<Project> =>
 {
     const db = getDB();
-    const resultadoOperacion = await db.collection(COLLECTION).updateOne(
+    await db.collection(COLLECTION).updateOne(
         { _id: new ObjectId(id) },
         { $set: proyectoActualizado }
     );
@@ -86,7 +86,7 @@ export const findProjectById = async (id: string): Promise<Project | null> => {
 export const obtenerProyectosDelUsuario = async (id_usuario: string): Promise<Project[]> =>
 {
     const db = getDB();
-    console.log("Obteniendo proyectos del usuario con id: ", id_usuario);
+    // console.log("Obteniendo proyectos del usuario con id: ", id_usuario);
     return await db.collection<Project>(COLLECTION).find({ $or: [ { owner: new ObjectId(id_usuario) }, { members: new ObjectId(id_usuario) } ] }).toArray();
 }
 

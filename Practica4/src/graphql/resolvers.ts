@@ -300,14 +300,13 @@ export const resolvers: IResolvers = {
                 throw new Error("Error: La fecha de vencimiento proporcionada no es válida.");
             }
 
-            console.log("AssignedTo:", assignedTo);
-
-            await comprobarUsuarioId(assignedTo.toString());
-
-            if (!status || !(status in TaskStatus))
+            // console.log("AssignedTo:", assignedTo);
+            if(assignedTo)
             {
-                throw new Error("Error: El estado de la tarea no es válido.");
+                await comprobarUsuarioId(assignedTo.toString());
             }
+
+
             if (!priority || !(priority in TaskPriority))
             {
                 throw new Error("Error: La prioridad de la tarea no es válida.");
@@ -317,10 +316,10 @@ export const resolvers: IResolvers = {
                 {
                     title: title,
                     project: new ObjectId(projectId),
-                    assignedTo: assignedTo,
-                    status: status as TaskStatus,
+                    assignedTo: assignedTo?? null,
+                    status: status as TaskStatus??TaskStatus.PENDING ,
                     priority: priority as TaskPriority,
-                    dueDate: dueDate
+                    dueDate: new Date(dueDate)
                 };
 
             const resultadoOperacion = await insertarTarea(tareaNueva);
