@@ -2,11 +2,15 @@ import { gql } from "apollo-server";
 
 export const typeDefs = gql`
     
+     """Respuesta a los intentos de autenticación""" 
     type AuthPayload{
+     """ Token JWT correspondiente al usuario autenticado"""
     token: String!
+    """ Usuario autenticado"""
     user: User!
     }
 
+    """ Usuario del sistema """
     type User {
         _id: ID!
         username: String!
@@ -23,6 +27,7 @@ export const typeDefs = gql`
         endDate: String!
         owner: User!
         members: [User]!
+        tasks: [Task!]!
     }
     
     enum TaskStatus {
@@ -69,7 +74,8 @@ export const typeDefs = gql`
         name: String!
         description: String
         startDate: String!
-        endDate: String!
+        endDate: String!,
+        members: [ID!]
     }
     
     input TaskInput{
@@ -82,19 +88,23 @@ export const typeDefs = gql`
     }
     
     type Query {
-        myProjects:[Project!]!
+        myProjects:[Project!]! #todo
+        projectDetails(id: ID!): Project #todo
+        users: [User!]! 
     }
     
     
     
     type Mutation{
+    # Públicas
         register(input: RegisterInput!): AuthPayload
         login(input: LoginInput!): AuthPayload
-        createProject(input: CreateProjectInput!):Project
-        updateProject(id: ID!, input: UpdateProjectInput!): Project!
-        addMember(projectId: ID!, userId: ID!): Project!
-        createTask(projectId: ID!, input: TaskInput!): Task!
-        updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!
+    # Autenticadas
+        createProject(input: CreateProjectInput!):Project #testme // Cuasi-Probado
+        updateProject(id: ID!, input: UpdateProjectInput!): Project! #testme
         deleteProject(id: ID!):Boolean
+        addMember(projectId: ID!, userId: ID!): Project! #todo
+        createTask(projectId: ID!, input: TaskInput!): Task! #todo
+        updateTaskStatus(taskId: ID!, status: TaskStatus!): Task!  #todo
     }
         `;
