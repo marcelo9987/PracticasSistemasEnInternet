@@ -87,8 +87,8 @@ export const typeDefs = gql`
     }
     
     type Query {
-        myProjects:[Project!]! #todo
-        projectDetails(id: ID!): Project #todo
+        myProjects:[Project!]! 
+        projectDetails(id: ID!): Project 
         users: [User!]! 
     }
     

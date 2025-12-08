@@ -13,7 +13,7 @@ import {
     actualizarProyecto,
     crearProyecto,
     eliminarProyecto,
-    findProjectById,
+    findProjectById, obtenerProyectosDelUsuario,
     proyectoDeUsuario,
     validarFechasProyecto
 } from "../collections/proyectos";
@@ -54,6 +54,31 @@ export const resolvers: IResolvers = {
             }
             return await obtenerUsuarios();
         },
+        myProjects: async (_, __, context) =>
+        {
+            if (!context.user)
+            {
+                throw new Error("No autenticado!");
+            }
+            return await obtenerProyectosDelUsuario(context.user._id.toString());
+        },
+        projectDetails: async (_, {id}:{id:string}, context) =>
+        {
+            if (!context.user)
+            {
+                throw new Error("No autenticado!");
+            }
+            const proyecto = await findProjectById(id);
+            if(!proyecto)
+            {
+                throw new Error("El proyecto no existe");
+            }
+            if(!(await proyectoDeUsuario(context.user._id.toString(), id)))
+            {
+                throw new Error("No tienes permisos para ver este proyecto");
+            }
+            return proyecto;
+        }
 
     }, Mutation: {
         // REGISTRAR
@@ -122,7 +147,7 @@ export const resolvers: IResolvers = {
             }
 
             const nuevoProyecto: Project = {
-                name: name, description: description || "", startDate: new Date(startDate), endDate: new Date(endDate), owner: contexto.user._id.toString(), members: [contexto.user._id.toString(), ...(members ?? [])],
+                name: name, description: description || "", startDate: new Date(startDate), endDate: new Date(endDate), owner: new ObjectId(contexto.user._id.toString()), members: [contexto.user._id.toString(), ...(members ?? [])],
             };
             const id = await crearProyecto(nuevoProyecto);
             const proyectoCreado: Project | null = await findProjectById(id);

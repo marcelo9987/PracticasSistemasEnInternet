@@ -82,3 +82,12 @@ export const findProjectById = async (id: string): Promise<Project | null> => {
     const db = getDB();
     return await db.collection<Project>(COLLECTION).findOne({_id: new ObjectId(id)});
 }
+
+export const obtenerProyectosDelUsuario = async (id_usuario: string): Promise<Project[]> =>
+{
+    const db = getDB();
+    console.log("Obteniendo proyectos del usuario con id: ", id_usuario);
+    return await db.collection<Project>(COLLECTION).find({ $or: [ { owner: new ObjectId(id_usuario) }, { members: new ObjectId(id_usuario) } ] }).toArray();
+}
+
+
